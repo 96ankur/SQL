@@ -145,3 +145,60 @@ LIMIT 3;
     JOIN order_item_notes oin
 	    ON oi.order_id = oin.order_id
         AND oi.product_id = oin.product_id
+### Outer Join
+- Return all customers whether they have any orders or not
+    ```sql
+        SELECT *
+        FROM customers c
+        LEFT JOIN orders o
+        ON c.customer_id = o.customer_id
+- There are two OUTER join
+    - LEFT OUTER JOIN
+    - RIGHT OUTER JOIN
+- Query with `LEFT OUTER` join will contain all the records from left table.
+- Query with `RIGHT OUTER` join will contain all the records from right table.
+- `OUTER` keyword is not necessary.
+### OUTER join between multiple tables
+-    ```sql
+        SELECT order_date,
+        	   order_id,
+               c.first_name,
+               s.name AS shipper,
+               os.name
+        FROM orders o
+        JOIN customers c
+        		ON o.customer_id = c.customer_id
+        LEFT JOIN order_statuses os
+        		ON o.status = os.order_status_id
+        LEFT JOIN shippers s
+	        	ON o.shipper_id = s.shipper_id
+- Avoid using different joins (left, right) in the same query.
+### Self OUTER join
+-    ```sql
+        SELECT 
+            e.employee_id,
+            e.first_name,
+            m.fitst_name AS manager
+        FROM employees e
+        LEFT JOIN employees m
+                ON e.reports_to = m.employee_id
+### USING clause
+- `USING` clause is used to simplify the joining condition in 
+-    ```sql
+        SELECT order_date,
+        	   order_id,
+               c.first_name,
+               s.name AS shipper,
+        FROM orders o
+        JOIN customers c
+        		USING(customer_id)
+        LEFT JOIN shippers s
+	        	USING(shipper_id)
+### CROSS join
+-   ```sql
+        SELECT * 
+        FROM shippers s
+        CROSS JOIN products p
+- Second syntax
+        SELECT * 
+        FROM shippers s,products p
