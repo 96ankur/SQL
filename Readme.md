@@ -108,6 +108,8 @@ LIMIT 3;
     SELECT *
     FROM customers
     LIMIT 6, 3
+### JOINS
+- Joins are used to combine columns from multiple table.
 ### Inner Joins
 - We can use only join keyword as inner keyword is optional
     ```sql
@@ -200,5 +202,165 @@ LIMIT 3;
         FROM shippers s
         CROSS JOIN products p
 - Second syntax
+    ```sql
         SELECT * 
         FROM shippers s,products p
+### Union
+- Union is use to combine rows from multiple tables.
+    ```sql
+        SELECT customer_id, 
+        	   first_name,
+               points,
+               'Bronze' AS type
+        FROM customers WHERE points < 2000
+        UNION
+        SELECT customer_id, 
+        	   first_name,
+               points,
+               'Silver' AS type
+        FROM customers WHERE points  BETWEEN 2000 AND 3000
+        UNION
+        SELECT customer_id, 
+        	   first_name,
+               points,
+               'Gold' AS type
+        FROM customers WHERE points > 3000
+        ORDER BY first_name
+- Number of columns in both the querys for union must have same number of columns.
+- Column names for the result is taken from the first query.
+### Inserting a row
+- Syntax-1 (order of the values must be same as that of the order of the columm)
+    ```sql
+        INSERT INTO customers
+        VALUES(
+            'Ram',
+            'kumar',
+            NULL,
+            'address'
+            'state'
+            DEFAULT
+        )
+- Syntax-2 (order of the values is not important)
+    ```sql
+        INSERT INTO customers (
+            first_name,
+            last_name,
+            address,
+            state,
+            points
+        )
+        VALUES(
+            'Ram',
+            'kumar',
+            NULL,
+            'address'
+            'state'
+            DEFAULT
+        )
+### Inserting multiple rows
+-   ```sql
+        INSERT INTO products(
+        	name,
+            quantity_in_stock,
+            unit_price
+        )
+        VALUES ('Table', 3, 50.0),
+        		('Beads', 10, 20.0),
+                ('Bead bag', 10, 50.0)
+### Inserting Hierarchical rows
+- This is used when there is a parent child relation between two tables. That is, when record in a table depends on other table.   
+    ```sql
+        INSERT INTO orders (customer_id, order_date, status)
+        VALUES (1, '2020-01-05', 1);
+        INSERT INTO order_items
+        VALUES
+            (LAST_INSERT_ID(), 1, 1, 2.95)
+            (LAST_INSERT_ID(), 2, 1, 3.95)
+### Creating a copy of a Table
+-   ```sql
+        CREATE TABLE invoices_archived AS
+        SELECT invoice_id, number, c.name AS client_name, invoice_total, payment_total, invoice_date, due_date, payment_date 
+        FROM invoices i
+        JOIN clients c
+        		USING(client_id)
+        WHERE payment_date IS NOT NULL
+### Updating a sigle row
+-   ```sql
+        UPDATE invoices
+        SET
+            payment_total = invoice_total * 0.5
+            payment_date = due_date   -- due_daate is a column name
+        WHERE invoice_id = 1
+### Subquery in update statement
+-   ```sql
+        UPDATE orders
+        SET comments = "Gold Customers"
+        WHERE customer_id IN (SELECT customer_id
+        FROM customers
+        WHERE points > 3000)
+### Delete
+- We can also use sub-queries with delete command
+    ```sql
+        DELETE FROM invoices
+        WHERE client_id = 3
+### Aggregate Functions
+-   These functions only operate only on NON NULL value.
+-   Agregate: max(), min(), sum(), avg(), count()
+    ```sql
+    SELECT 'First half of 2019' AS date_range,
+    	   SUM(invoice_total) AS total_sales,
+    	   SUM(payment_total) AS total_payments,
+           SUM(invoice_total - payment_total) AS what_we_expect
+    FROM invoices
+    WHERE invoice_date BETWEEN '2019-01-01' AND '2019-06-30'
+    UNION
+    SELECT 'Second half of 2019' AS date_range,
+    	   SUM(invoice_total) AS total_sales,
+    	   SUM(payment_total) AS total_payments,
+           SUM(invoice_total - payment_total) AS what_we_expect
+    FROM invoices
+    WHERE invoice_date BETWEEN '2019-07-01' AND '2019-12-31'
+    UNION
+    SELECT 'TOTAL' AS date_range,
+    	   SUM(invoice_total) AS total_sales,
+    	   SUM(payment_total) AS total_payments,
+           SUM(invoice_total - payment_total) AS what_we_expect
+    FROM invoices
+    WHERE invoice_date BETWEEN '2019-01-01' AND '2019-12-31'
+### Group By
+- Whenever we use aggregate functions then we have to use all the columns for GROUP BY.
+    ```sql
+        SELECT date, 
+        	name AS payment_method,
+        	SUM(amount) AS total_payments
+         FROM payments p
+         JOIN payment_methods pm
+        		ON p.payment_method = pm.payment_method_id
+        GROUP BY date, name
+### Having clause
+- Having is used to filter data after grouping.
+- Columns used in the having condition have to be the part of select clause.
+    ```sql
+        SELECT c.customer_id,
+        		c.first_name,
+                c.last_name,
+        		SUM(quantity * unit_price) AS totalSpent
+        FROM customers c
+        JOIN orders o USING(customer_id)
+        JOIN order_items oi USING(order_id)
+        WHERE state = 'VA'
+        GROUP BY 
+        	c.customer_id,
+        	c.first_name,
+            c.last_name
+        HAVING totalSpent > 100
+ ### Roll UP
+- Roll up applyies only to the column that aggregate values
+- When we GROUP BY multiple columns and use the ROLL UP operator, then result will be the values for **each GROUP** 
+    ```sql
+    SELECT name payment_method,  -- no need of writting AS clause
+    	   SUM(amount) total
+    FROM payments p
+    JOIN payment_methods pm
+    		ON p.payment_method = pm.payment_method_id
+    GROUP BY name WITH ROLLUP
